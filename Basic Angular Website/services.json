@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "name": "Hardware Repair",
+    "description": "This is just some random amount of stuff to describe stuff",
+    "image": "http://techguystaging.com/files/computer-icon.png"
+  },
+  {
+    "id": 2,
+    "name": "Virus Removal",
+    "description": "This is just some random amount of stuff to describe stuff",
+    "image": "http://techguystaging.com/files/computer-icon.png"
+  },
+  {
+    "id": 3,
+    "name": "System Tune Up",
+    "description": "This is just some random amount of stuff to describe stuff",
+    "image": "http://techguystaging.com/files/computer-icon.png"
+  }
+]
