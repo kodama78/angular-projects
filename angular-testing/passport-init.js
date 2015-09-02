@@ -1,36 +1,50 @@
 var LocalStrategy   = require('passport-local').Strategy;
 var bCrypt = require('bcrypt-nodejs');
-//temporary data store
-var users = {};
+var mongoose = require('mongoose');
+var User = mongoose.model('User');
+var Post = mongoose.model('Post');
 module.exports = function(passport){
 
 	// Passport needs to be able to serialize and deserialize users to support persistent login sessions
 	passport.serializeUser(function(user, done) {
-		console.log('serializing user:',user.username);
-		return done(null, user.username);
+		console.log('serializing user:',user._id);
+		return done(null, user._id);
 	});
 
-	passport.deserializeUser(function(username, done) {
+	passport.deserializeUser(function(id, done) {
 
-		return done(null, users[username]);
+		User.findById(id, function(err, user){
 
+			if(err){
+				return done(err, false);
+			}
+			if(!user){
+				return done('user not found', false);
+			}
+			return done(user, true);
+		});
 	});
 
 	passport.use('login', new LocalStrategy({
 		passReqToCallback : true
 	},
 	function(req, username, password, done) {
-		if(!user[username]){
-			return done('user not found', false)
-		}
 
-		if(!isValidPassword(users[username], password)){
-			return done('invalid password', false);
-		}
-		console.log('succesfully signed in');
-		return done(null, user[username]);
+		User.findOne({username: username}, function(err, user){
+			if(err){
+				return done(err, false);
+			}
+			if(!user){
+				return done('user ' + username + ' not found!', false);
+			}
+			if(!isValidPassword(user, password)){
+				//wrong password
+				return done('incorrect password', false);
+			}
+			return done(null, user);
+		});
 	}
-	));
+));
 
 	passport.use('signup', new LocalStrategy(
 		{
@@ -38,17 +52,29 @@ module.exports = function(passport){
 		},
 		function(req, username, password, done) {
 			//check if user exists
-			if(users[username]){
-				return done('username already taken', false);
-			}
-			users[username] = {
-				username: username,
-				password: createHash(password)
-			};
+			User.findOne({username: username}, function(err, user){
+				if(err){
+					return done(err, false);
+				}
+				if(user){
+					//we have already signed this user up
+					return done('username already taken', false);
+				}
 
-			return done(null, users[username]);
-		})
-	);
+				var user = new User();
+
+				user.username = username;
+				user.password = createHash(password);
+
+				user.save(function(err, user){
+					if(err){
+						return done(err, false);
+					}
+					console.log('succesfully signed up user ' + username);
+					return done(null, user);
+				});
+			});
+		}));
 
 	var isValidPassword = function(user, password){
 		return bCrypt.compareSync(password, user.password);

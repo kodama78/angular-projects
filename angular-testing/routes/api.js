@@ -1,26 +1,80 @@
 var express = require('express');
 var router = express.Router();
+var mongoose = require('mongoose');
+var Post = require('./../models/models.js');
+Post = mongoose.model('Post');
+
+router.use(function(req, res, next){
+	if(req.method ==="GET"){
+		//continue to the next middleware or request handler
+		return next();
+	}
+	if(!req.isAuthenticated()){
+		//user not authenticated, redirect to login page
+		return res.redirect('/#login');
+	}
+	//user authenticated continue to next middleware or handler
+	return next();
+});
 
 router.route('/posts')
 
-.get(function(req, res){
+	.get(function(req, res){
 
-	res.send({message: 'TODO return all posts'});
+		Post.find(function(err, data){
+			if(err){
+				return res.send(500, err);
+			}
+			return res.send(data);
+		});
+	})
 
-})
+	.post(function(req, res){
 
-.post(function(req, res){
-	res.send({message: 'TODO create a new post'});
-});
+		var post = new Post();
+		post.text = req.body.text;
+		post.username = req.body.created_by;
+		post.save(function(err, data){
+			if(err){
+				return res.send(500, err);
+			}
+			return res.json(post);
+		});
+	});
 
 router.route('/posts/:id')
 .get(function(req, res){
-	res.send({message: 'TODO return post with id ' + req.params.id});
+	Post.findById(req.params.id, function(err, post){
+		if(err){
+			res.send(err);
+		}
+		res.json(post);
+	});
 })
 .put(function(req,res){
-	res.send({message: 'TODO modify post with id ' + req.params.id})
+	Post.findbyId(req.params.id, function(err, post){
+		if(err){
+			res.send(err);
+		}
+		post.username = req.body.created_by;
+		post.text = req.body.text;
+
+		post.save(function(err, post){
+			if(err){
+				res.send(err);
+			}
+			res.json(post);
+		});
+	});
 })
 .delete(function(req,res){
-	res.send({message: 'TODO delete post with id ' + req.params.id})
-})
+	Post.remove({
+		_id: req.params.id
+	}, function(err){
+		if(err){
+			res.send(err);
+		}
+		res.json("deleted :(");
+	});
+});
 module.exports = router;

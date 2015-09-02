@@ -2,13 +2,22 @@ var express = require('express');
 var path = require('path');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
-var passport = require('passport');
-var session = require('express-session');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var passport = require('passport');
+var session = require('express-session');
+var mongoose = require('mongoose');
+var models = require('./models/models.js');
 
+//connect to mongodb
+mongoose.connect("mongodb://localhost:27017/chirp-test");
+
+//import the routers
+var index = require('./routes/index');
 var api = require('./routes/api');
-//var authenticate = require('./routes/authenticate');
+var authenticate = require('./routes/authenticate')(passport);
+
+
 
 var app = express();
 
@@ -30,12 +39,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(passport.initialize());
 app.use(passport.session());
 
+
 //Initializes Passport
 var initPassport = require('./passport-init');
 initPassport(passport);
 
+app.use('/', index);
 app.use('/api', api);
-//app.use('/auth', authenticate);
+app.use('/auth', authenticate);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
